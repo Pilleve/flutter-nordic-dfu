@@ -80,8 +80,10 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
     /**
      * Initializes the plugin in a binding-agnostic way.
      *
-     * @param context         either registrar.context() or binding.getApplicationContext()
-     * @param binaryMessenger either registrar.messenger() or binding.getBinaryMessenger()
+     * @param context         either registrar.context() or
+     *                        binding.getApplicationContext()
+     * @param binaryMessenger either registrar.messenger() or
+     *                        binding.getBinaryMessenger()
      */
     private void init(Context context, BinaryMessenger binaryMessenger) {
         this.mContext = context;
@@ -130,7 +132,8 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
             String filePath = call.argument("filePath");
             Boolean fileInAsset = call.argument("fileInAsset");
             Boolean forceDfu = call.argument("forceDfu");
-            Boolean enableUnsafeExperimentalButtonlessServiceInSecureDfu = call.argument("enableUnsafeExperimentalButtonlessServiceInSecureDfu");
+            Boolean enableUnsafeExperimentalButtonlessServiceInSecureDfu = call
+                    .argument("enableUnsafeExperimentalButtonlessServiceInSecureDfu");
             Boolean disableNotification = call.argument("disableNotification");
             Boolean keepBond = call.argument("keepBond");
             Boolean packetReceiptNotificationsEnabled = call.argument("packetReceiptNotificationsEnabled");
@@ -155,8 +158,7 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
                     filePath = registrar.lookupKeyForAsset(filePath);
                 }
 
-                String tempFileName = PathUtils.getExternalAppCachePath(mContext)
-                        + UUID.randomUUID().toString();
+                String tempFileName = PathUtils.getExternalAppCachePath(mContext) + UUID.randomUUID().toString();
                 // copy asset file to temp path
                 ResourceUtils.copyFileFromAssets(filePath, tempFileName, mContext);
                 // now, the path is an absolute path, and can pass it to nordic dfu library
@@ -164,7 +166,9 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
             }
 
             pendingResult = result;
-            startDfu(address, name, filePath, forceDfu, enableUnsafeExperimentalButtonlessServiceInSecureDfu, disableNotification, keepBond, packetReceiptNotificationsEnabled, restoreBond, startAsForegroundService, result, numberOfPackets, enablePRNs);
+            startDfu(address, name, filePath, forceDfu, enableUnsafeExperimentalButtonlessServiceInSecureDfu,
+                    disableNotification, keepBond, packetReceiptNotificationsEnabled, restoreBond,
+                    startAsForegroundService, result, numberOfPackets, enablePRNs);
         } else if (call.method.equals("abortDfu")) {
             if (controller != null) {
                 controller.abort();
@@ -177,16 +181,17 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
     /**
      * Start Dfu
      */
-    private void startDfu(String address, @Nullable String name, String filePath, Boolean forceDfu, Boolean enableUnsafeExperimentalButtonlessServiceInSecureDfu, Boolean disableNotification, Boolean keepBond, Boolean packetReceiptNotificationsEnabled, Boolean restoreBond, Boolean startAsForegroundService, Result result, Integer numberOfPackets, Boolean enablePRNs) {
+    private void startDfu(String address, @Nullable String name, String filePath, Boolean forceDfu,
+            Boolean enableUnsafeExperimentalButtonlessServiceInSecureDfu, Boolean disableNotification, Boolean keepBond,
+            Boolean packetReceiptNotificationsEnabled, Boolean restoreBond, Boolean startAsForegroundService,
+            Result result, Integer numberOfPackets, Boolean enablePRNs) {
 
-        DfuServiceInitiator starter = new DfuServiceInitiator(address)
-                .setZip(filePath)
-                .setKeepBond(true)
+        DfuServiceInitiator starter = new DfuServiceInitiator(address).setZip(filePath).setKeepBond(true)
                 .setForceDfu(forceDfu == null ? false : forceDfu)
-                .setPacketsReceiptNotificationsEnabled(enablePRNs == null ? Build.VERSION.SDK_INT < Build.VERSION_CODES.M : enablePRNs)
+                .setPacketsReceiptNotificationsEnabled(
+                        enablePRNs == null ? Build.VERSION.SDK_INT < Build.VERSION_CODES.M : enablePRNs)
                 .setPacketsReceiptNotificationsValue(numberOfPackets == null ? 0 : numberOfPackets)
-                .setPrepareDataObjectDelay(400)
-                .setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(true);
+                .setPrepareDataObjectDelay(400).setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(true);
         if (name != null) {
             starter.setDeviceName(name);
         }
@@ -194,7 +199,8 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
         pendingResult = result;
 
         if (enableUnsafeExperimentalButtonlessServiceInSecureDfu != null) {
-            starter.setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(enableUnsafeExperimentalButtonlessServiceInSecureDfu);
+            starter.setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(
+                    enableUnsafeExperimentalButtonlessServiceInSecureDfu);
         }
 
         if (forceDfu != null) {
@@ -280,7 +286,6 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
                 pendingResult = null;
             }
 
-
             channel.invokeMethod("onDfuAborted", deviceAddress);
         }
 
@@ -293,7 +298,6 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
                 pendingResult.success(deviceAddress);
                 pendingResult = null;
             }
-
 
             channel.invokeMethod("onDfuCompleted", deviceAddress);
         }
@@ -317,38 +321,48 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
         }
 
         @Override
+        public void onFirmwareUploading(@NonNull String deviceAddress) {
+            super.onFirmwareUploading(deviceAddress);
+            channel.invokeMethod("onFirmwareUploading", deviceAddress);
+        }
+
+        @Override
         public void onFirmwareValidating(@NonNull String deviceAddress) {
             super.onFirmwareValidating(deviceAddress);
             channel.invokeMethod("onFirmwareValidating", deviceAddress);
         }
 
         @Override
-        public void onProgressChanged(@NonNull final String deviceAddress, final int percent, final float speed, final float avgSpeed, final int currentPart, final int partsTotal) {
+        public void onProgressChanged(@NonNull final String deviceAddress, final int percent, final float speed,
+                final float avgSpeed, final int currentPart, final int partsTotal) {
             super.onProgressChanged(deviceAddress, percent, speed, avgSpeed, currentPart, partsTotal);
 
-            Map<String, Object> paras = new HashMap<String, Object>() {{
-                put("percent", percent);
-                put("speed", speed);
-                put("avgSpeed", avgSpeed);
-                put("currentPart", currentPart);
-                put("partsTotal", partsTotal);
-                put("deviceAddress", deviceAddress);
-            }};
+            Map<String, Object> paras = new HashMap<String, Object>() {
+                {
+                    put("percent", percent);
+                    put("speed", speed);
+                    put("avgSpeed", avgSpeed);
+                    put("currentPart", currentPart);
+                    put("partsTotal", partsTotal);
+                    put("deviceAddress", deviceAddress);
+                }
+            };
 
             channel.invokeMethod("onProgressChanged", paras);
         }
     };
 
     private void cancelNotification() {
-        // let's wait a bit until we cancel the notification. When canceled immediately it will be recreated by service again.
+        // let's wait a bit until we cancel the notification. When canceled immediately
+        // it will be recreated by service again.
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                final NotificationManager manager = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+                final NotificationManager manager = (NotificationManager) activity
+                        .getSystemService(Context.NOTIFICATION_SERVICE);
                 if (manager != null)
                     manager.cancel(DfuService.NOTIFICATION_ID);
             }
         }, 200);
     }
 }
-

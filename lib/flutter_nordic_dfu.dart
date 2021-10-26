@@ -73,8 +73,7 @@ class IosSpecialParameter {
 class FlutterNordicDfu {
   static const String kNamespace = 'com.timeyaa.flutter_nordic_dfu';
 
-  static const MethodChannel _channel =
-       MethodChannel('$kNamespace/method');
+  static const MethodChannel _channel = MethodChannel('$kNamespace/method');
 
   /// Start dfu handle
   /// [address] android: mac address iOS: device uuid
@@ -100,7 +99,6 @@ class FlutterNordicDfu {
         const AndroidSpecialParameter(),
     IosSpecialParameter iosSpecialParameter = const IosSpecialParameter(),
   }) async {
-
     _channel.setMethodCallHandler((MethodCall call) async {
       switch (call.method) {
         case "onDeviceConnected":
@@ -129,6 +127,9 @@ class FlutterNordicDfu {
           break;
         case "onEnablingDfuMode":
           progressListener?.onEnablingDfuMode(call.arguments);
+          break;
+        case "onFirmwareUploading":
+          progressListener?.onFirmwareUploading(call.arguments);
           break;
         case "onFirmwareValidating":
           progressListener?.onFirmwareValidating(call.arguments);
@@ -202,6 +203,8 @@ abstract class DfuProgressListenerAdapter {
 
   void onEnablingDfuMode(String deviceAddress) {}
 
+  void onFirmwareUploading(String deviceAddress) {}
+
   void onFirmwareValidating(String deviceAddress) {}
 
   void onError(
@@ -240,13 +243,20 @@ class DefaultDfuProgressListenerAdapter extends DfuProgressListenerAdapter {
 
   void Function(String deviceAddress)? onEnablingDfuModeHandle;
 
+  void Function(String deviceAddress)? onFirmwareUploadingHandle;
+
   void Function(String deviceAddress)? onFirmwareValidatingHandle;
 
   void Function(String deviceAddress, int error, int errorType, String message)?
       onErrorHandle;
 
-  void Function(String deviceAddress, int percent, double speed,
-      double avgSpeed, int currentPart, int partsTotal)? onProgressChangedHandle;
+  void Function(
+      String deviceAddress,
+      int percent,
+      double speed,
+      double avgSpeed,
+      int currentPart,
+      int partsTotal)? onProgressChangedHandle;
 
   DefaultDfuProgressListenerAdapter({
     this.onDeviceConnectedHandle,
@@ -258,6 +268,7 @@ class DefaultDfuProgressListenerAdapter extends DfuProgressListenerAdapter {
     this.onDfuProcessStartedHandle,
     this.onDfuProcessStartingHandle,
     this.onEnablingDfuModeHandle,
+    this.onFirmwareUploadingHandle,
     this.onFirmwareValidatingHandle,
     this.onErrorHandle,
     this.onProgressChangedHandle,
@@ -336,6 +347,14 @@ class DefaultDfuProgressListenerAdapter extends DfuProgressListenerAdapter {
   }
 
   @override
+  void onFirmwareUploading(String deviceAddress) {
+    super.onFirmwareUploading(deviceAddress);
+    if (onFirmwareUploadingHandle != null) {
+      onFirmwareUploadingHandle!(deviceAddress);
+    }
+  }
+
+  @override
   void onFirmwareValidating(String deviceAddress) {
     super.onFirmwareValidating(deviceAddress);
     if (onFirmwareValidatingHandle != null) {
@@ -366,6 +385,7 @@ class DefaultDfuProgressListenerAdapter extends DfuProgressListenerAdapter {
     }
   }
 
+  @override
   void onProgressChanged(
     String deviceAddress,
     int percent,
