@@ -321,12 +321,6 @@ public class FlutterNordicDfuPlugin implements MethodCallHandler, FlutterPlugin,
         }
 
         @Override
-        public void onFirmwareUploading(@NonNull String deviceAddress) {
-            super.onFirmwareUploading(deviceAddress);
-            channel.invokeMethod("onFirmwareUploading", deviceAddress);
-        }
-
-        @Override
         public void onFirmwareValidating(@NonNull String deviceAddress) {
             super.onFirmwareValidating(deviceAddress);
             channel.invokeMethod("onFirmwareValidating", deviceAddress);
